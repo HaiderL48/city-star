@@ -53,7 +53,9 @@ export default function PrinterScreen() {
       setFound(result.found);
       setStatus(result.paired.length + result.found.length ? t('ready') : t('noDevice'));
     } catch (error) {
-      setStatus(t(errorKey(error)));
+      const message = t(errorKey(error));
+      setStatus(message);
+      Alert.alert(t('printerTitle'), message);
     } finally {
       setBusy(false);
     }

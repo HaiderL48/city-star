@@ -36,7 +36,8 @@ export default function HomeScreen() {
   if (!settings || !user) return null;
 
   const actions = [
-    { icon: 'cart' as const, label: t('bill'), href: '/sale' },
+    { icon: 'flash' as const, label: t('quickSale'), href: '/quick-sale' },
+    { icon: 'cart' as const, label: t('posSale'), href: '/sale' },
     can.purchases ? { icon: 'download-outline' as const, label: t('purchases'), href: '/purchase/form' } : null,
     can.expenses ? { icon: 'wallet-outline' as const, label: t('expenses'), href: '/expense/form' } : null,
     { icon: 'return-down-back' as const, label: t('returns'), href: '/return/new' },
@@ -109,7 +110,7 @@ export default function HomeScreen() {
           </Pressable>
         </View>
         {data && data.recent.length === 0 ? (
-          <Pressable onPress={() => router.push('/sale')} style={styles.empty}>
+          <Pressable onPress={() => router.push('/quick-sale')} style={styles.empty}>
             <T weight="semi">{t('noBills')}</T>
             <T style={styles.link}>{t('firstBill')}</T>
           </Pressable>

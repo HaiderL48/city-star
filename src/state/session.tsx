@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { getSettings, getUser, initDb, saveSettings } from '@/db';
+import { getSettings, resolveShopUser, initDb, saveSettings } from '@/db';
 import type { Settings, User } from '@/db/types';
 import i18n from '@/i18n';
 
@@ -18,6 +18,20 @@ type SessionValue = {
 
 const SessionContext = createContext<SessionValue | null>(null);
 
+async function openShopSession() {
+  const next = await getSettings();
+  if (next.language) await i18n.changeLanguage(next.language);
+  if (!next.setupDone) {
+    return { settings: next, user: null as User | null };
+  }
+  let user = await resolveShopUser(next.currentUserId);
+  if (user && user.id !== next.currentUserId) {
+    await saveSettings({ currentUserId: user.id });
+    next.currentUserId = user.id;
+  }
+  return { settings: next, user };
+}
+
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -26,11 +40,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [version, setVersion] = useState(0);
 
   const reload = useCallback(async () => {
-    const next = await getSettings();
-    setSettings(next);
-    if (next.language) await i18n.changeLanguage(next.language);
-    const current = next.currentUserId ? await getUser(next.currentUserId) : null;
-    setUser(current?.active ? current : null);
+    const opened = await openShopSession();
+    setSettings(opened.settings);
+    setUser(opened.user);
     setVersion((value) => value + 1);
   }, []);
 
@@ -38,12 +50,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     let live = true;
     (async () => {
       await initDb();
-      const next = await getSettings();
-      if (next.language) await i18n.changeLanguage(next.language);
-      const current = next.currentUserId ? await getUser(next.currentUserId) : null;
+      const opened = await openShopSession();
       if (!live) return;
-      setSettings(next);
-      setUser(current?.active ? current : null);
+      setSettings(opened.settings);
+      setUser(opened.user);
       setReady(true);
     })().catch((caught) => {
       console.error(caught);
@@ -63,9 +73,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await saveSettings({ currentUserId: '' });
-    setUser(null);
-    setSettings((current) => (current ? { ...current, currentUserId: '' } : current));
+    // Private shop: stay signed in as the shop owner/admin.
+    const opened = await openShopSession();
+    setSettings(opened.settings);
+    setUser(opened.user);
   }, []);
 
   const notify = useCallback(() => setVersion((value) => value + 1), []);

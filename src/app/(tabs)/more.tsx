@@ -12,7 +12,7 @@ import { colors } from '@/theme';
 
 export default function MoreScreen() {
   const { t, lang } = useI18n();
-  const { settings, user, signOut } = useSession();
+  const { settings, user } = useSession();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const can = abilities(user?.role ?? 'cashier');
@@ -36,7 +36,6 @@ export default function MoreScreen() {
       <MenuRow icon="storefront-outline" title={t('shopProfile')} detail={settings.phone || t('notSet')} onPress={() => router.push('/shop')} />
       <MenuRow icon="print-outline" title={t('printerTitle')} detail={settings.printerName || t('notSet')} onPress={() => router.push('/printer')} />
       {can.staff ? <MenuRow icon="people-outline" title={t('staffAccess')} onPress={() => router.push('/staff')} /> : null}
-      <MenuRow icon="log-out-outline" title={t('signOut')} onPress={() => { signOut().then(() => router.replace('/login')); }} />
       <View style={styles.about}>
         <T weight="semi">{t('about')}</T>
         <T style={styles.muted}>{t('aboutBody')}</T>

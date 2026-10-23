@@ -3,7 +3,6 @@ import { Alert, StyleSheet, Switch, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PinPad } from '@/components/pin-pad';
 import { Button, Field, LanguageSwitch, Screen, T } from '@/components/ui';
 import { completeSetup } from '@/db';
 import { useI18n } from '@/i18n';
@@ -17,18 +16,20 @@ export default function SetupScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
-  const [shopName, setShopName] = useState('');
-  const [shopNameGu, setShopNameGu] = useState('');
+  const [shopName, setShopName] = useState('City Star Hardware');
+  const [shopNameGu, setShopNameGu] = useState('સિટી સ્ટાર હાર્ડવેર');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
   const [gstin, setGstin] = useState('');
-  const [owner, setOwner] = useState('');
-  const [pin, setPin] = useState('');
-  const [sample, setSample] = useState(true);
+  const [sample, setSample] = useState(false);
   const [taxInclusive, setTaxInclusive] = useState(true);
   const [busy, setBusy] = useState(false);
 
   const finish = async () => {
+    if (!shopName.trim()) {
+      Alert.alert(t('failedTitle'), t('shopRequired'));
+      return;
+    }
     setBusy(true);
     try {
       const user = await completeSetup({
@@ -38,8 +39,7 @@ export default function SetupScreen() {
         address,
         gstin,
         language: lang,
-        ownerName: owner,
-        pin,
+        ownerName: t('ownerAdmin'),
         sample,
         taxInclusive,
       });
@@ -93,19 +93,6 @@ export default function SetupScreen() {
             <T style={styles.flex}>{t('pricesInclude')}</T>
             <Switch value={taxInclusive} onValueChange={setTaxInclusive} trackColor={{ true: colors.green }} />
           </View>
-          <Button label={t('continue')} onPress={() => (shopName.trim() ? setStep(2) : Alert.alert(t('failedTitle'), t('shopRequired')))} />
-          <Button label={t('back')} kind="ghost" onPress={() => setStep(0)} />
-        </View>
-      ) : null}
-
-      {step === 2 ? (
-        <View style={styles.block}>
-          <T weight="bold" style={styles.h}>
-            {t('almost')}
-          </T>
-          <Field label={t('yourName')} value={owner} onChangeText={setOwner} />
-          <T style={styles.help}>{t('pinHelp')}</T>
-          <PinPad value={pin} onChange={setPin} />
           <View style={styles.switchRow}>
             <View style={styles.flex}>
               <T weight="semi">{t('includeSample')}</T>
@@ -114,7 +101,7 @@ export default function SetupScreen() {
             <Switch value={sample} onValueChange={setSample} trackColor={{ true: colors.green }} />
           </View>
           <Button label={busy ? t('working') : t('startShop')} onPress={finish} disabled={busy} />
-          <Button label={t('back')} kind="ghost" onPress={() => setStep(1)} />
+          <Button label={t('back')} kind="ghost" onPress={() => setStep(0)} />
         </View>
       ) : null}
     </Screen>
