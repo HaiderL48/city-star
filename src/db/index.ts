@@ -312,6 +312,17 @@ export async function getUser(id: string) {
   return row ? mapUser(row) : null;
 }
 
+/** Private shop: always open as an active admin (or any active staff). */
+export async function resolveShopUser(preferredId?: string) {
+  if (preferredId) {
+    const preferred = await getUser(preferredId);
+    if (preferred?.active) return preferred;
+  }
+  const users = await listUsers();
+  const active = users.filter((user) => user.active);
+  return active.find((user) => user.role === 'admin') ?? active[0] ?? null;
+}
+
 export async function verifyPin(userId: string, pin: string) {
   const db = await getDb();
   const hash = await hashPin(pin);
@@ -1562,18 +1573,18 @@ export async function completeSetup(input: {
   gstin: string;
   language: Lang;
   ownerName: string;
-  pin: string;
+  pin?: string;
   sample: boolean;
   taxInclusive: boolean;
 }) {
   const shopName = input.shopName.trim();
-  const ownerName = input.ownerName.trim();
+  const ownerName = input.ownerName.trim() || 'Owner';
   if (!shopName) fail('shop_required');
-  if (!ownerName) fail('name_required');
-  if (!/^\d{4,6}$/.test(input.pin)) fail('pin_rule');
+  // Private shop app: PIN is optional and unused at startup.
+  const pin = input.pin?.trim() && /^\d{4,6}$/.test(input.pin.trim()) ? input.pin.trim() : '0000';
   const db = await getDb();
   const userId = uid('usr');
-  const pinHash = await hashPin(input.pin);
+  const pinHash = await hashPin(pin);
   await db.withTransactionAsync(async () => {
     const pairs: [string, string][] = [
       ['shopName', shopName],

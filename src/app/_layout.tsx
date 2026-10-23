@@ -32,12 +32,13 @@ function Guard() {
   useEffect(() => {
     if (!ready || !settings) return;
     const top = segments[0];
+    // Private shop app: skip login/registration and open the counter directly.
     if (!settings.setupDone) {
       if (top !== 'setup') router.replace('/setup');
       return;
     }
     if (!user) {
-      if (top !== 'login') router.replace('/login');
+      if (top !== 'setup') router.replace('/setup');
       return;
     }
     if (!top || top === 'index' || top === 'login' || top === 'setup') router.replace('/home');
