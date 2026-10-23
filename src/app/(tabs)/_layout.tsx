@@ -32,7 +32,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="sale"
         options={{
-          title: t('bill'),
+          title: t('posSale'),
           tabBarIcon: ({ color, size }) => <Ionicons name="cart" color={color} size={size} />,
         }}
       />

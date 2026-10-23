@@ -758,12 +758,18 @@ export async function createSale(input: {
   note: string;
   user: Actor;
   taxInclusive: boolean;
+  guestName?: string;
+  guestPhone?: string;
 }) {
   const lines = input.lines.filter((line) => line.qty > 0);
   if (!lines.length) fail('empty_cart');
   if (lines.some((line) => line.rate < 0)) fail('invalid_amount');
   const bill = computeBill(lines, input.discount, input.taxInclusive);
   if (bill.total < 0) fail('invalid_amount');
+
+  const guestName = input.guestName?.trim() ?? '';
+  const guestPhone = input.guestPhone?.trim() ?? '';
+  if (guestPhone && !/^\d{10,13}$/.test(guestPhone)) fail('phone_invalid');
 
   let paid = bill.total;
   let due = 0;
@@ -792,8 +798,8 @@ export async function createSale(input: {
       number,
       todayKey(),
       party?.id ?? null,
-      party?.name ?? '',
-      party?.phone ?? '',
+      party?.name || guestName,
+      party?.phone || guestPhone,
       bill.subtotal,
       bill.tax,
       bill.discount,
